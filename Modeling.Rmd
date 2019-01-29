@@ -2,7 +2,7 @@
 title: "Introduction to the Model"
 author: "Brockton Butcher"
 date: "1/17/2019"
-output: html_document
+output: github_document
 ---
 
 The goal of this study is to use visual characteristics gathered from a Bull and a Cow, and create a predictive model that provides a probability for the corresponding distributions of the offspring. Once this initial model is created I would like to also explore the impacts of how the grandparents/lineage of the offspring also effects probability/ strength in priors and if this could be useful in an estimate.
