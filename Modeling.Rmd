@@ -5,7 +5,124 @@ date: "1/17/2019"
 output: github_document
 ---
 
+#### Intro
+Using statistics to provide evidence of certain phenomena has helped the world reach the level of technology and efficiency we see today. The application to agriculture has created a competitive advantage to the American farmer. One example of this is within cattle breeding, statisticians and geneticists have created a tool known as Expected Progeny Difference (EPD) to help predict the value of future offspring.  EPDs are the best and most efficient way to make genetic progress over the course of time. The essential traits in the EPD are derived from: the individuals own performance record, progeny records, records of other relatives within the pedigree, genotyping, and genetic correlations of traits (Select Sires Inc.). Through these methods, terminal traits have imrpoved drastically.
+
+Despite the use of EPDs on the terminal value of future offspring, emphasis on selecting cattle for long lived production has largely been disregarded. Right now, there is one provider of genetic information that estimates production life in beef cattle. This trait, known as stayability, has helped Red Angus and Simmental breeders get an estimate on the production life of their animals. While this estimator has proved useful for these breeds, getting a highly accurate production measure for this EPD early on isn't possible because the performance is measured in production lifetime. This takes a minimum of 6 years to get a truly accurate estimate. This creates a sense of uncertainty in what to expect. The way that most people try to address this issue is by ensuring that the body composition of the animal is sound. The reason for this is that over the course of time ranchers have noticed patterns in visual characteristics that affect the production life cattle. Many of these patterns are obvious, one such trait is the structure of the feet. This trait affects the production life becuase after excessive use they start to deteriorate and they become unable to travel easily and can no longer maintain their required nutrition requirements. After observing this phenomena ranchers began to notice what the make-up of animals that are better suited to resist to these handicaps. Just because an animal expresses this favorable make-up doesn't guarantee a long life, but it gives them a better chance at a longer production life. The goal of this study is to try and create a model much like an EPD that gives the rancher an estimate of the visual composition in the offspring of two animals that have procreated.
+
+##### What my question
 The goal of this study is to use visual characteristics gathered from a Bull and a Cow, and create a predictive model that provides a probability for the corresponding distributions of the offspring. Once this initial model is created I would like to also explore the impacts of how the grandparents/lineage of the offspring also effects probability/ strength in priors and if this could be useful in an estimate.
+
+##### Background
+
+#### Data Summary
+I collected data on every female animal in production on my ranch, along with yearling females known as heifers. Through this collection I judged each animal on visual measures I thought pertained to the longevity of their production on a scale of 1-5 with 1 being less desirable than 5 and their weight was also measured. There was complete collection of these visual characteristics on 622 cows, and 324 heifers respectively for a total of 946. The first characteristic I measured was frame size, with 1 being smallest and 5 being largest. This can be an idicator of required feed in-take which I believe is related to efficiency and health requirements. Secondly, I judged front feet appearance, which was based on heel angle, the hoof length, size of feet,  and cracking of a hoof. This same procdure was done when measuring the hind feet. A score of 1 was considered worst with 5 being a perfect score. Then a judgement of udder quality was measured, this was conducted by characterizing teat size, udder depth, and ligament attachment (levelness of the udder). The final score taken was overall grade, which was a measurement of the overall quality of all characteritics that made them desireable. For the sake of this study, I am wanting to explore the relationship paternal and maternal lineage affect offspring with multinomial data.
+##### the characteristics
+##### the scales
+##### data collection
+##### visualization
+```{r,echo=FALSE}
+library('ggplot2')
+heifers <- read.csv('heiferswepd')
+cows <- read.csv('cowswepd')
+sirefact <- as.factor(cows$SIRE)
+OverallGrade <- as.factor(cows$Grade)
+gradeframe <- data.frame(OverallGrade,sirefact)
+ggplot(gradeframe, aes(x=sirefact, fill=OverallGrade)) + geom_bar()+ ggtitle("Overall Grade By Sire") + theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+
+```
+
+This graph is a good illustration of the variability within each sire group of cows.
+
+
+```{r, echo=FALSE}
+heifsire <- as.factor(heifers$Sire)
+Heifergrade <- as.factor(heifers$Grade)
+heiferdf <- data.frame(heifsire,Heifergrade)
+ggplot(heiferdf, aes(x=heifsire, fill=Heifergrade)) + geom_bar() + ggtitle(" Heifer Overall Grade By Sire")+ theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+```
+
+This is an illustration of the variability of the overall visual grade for each sire group based on the grades of all heifers.
+
+
+```{r,include=FALSE}
+gradeDF <- merge(heifers[,c("Sire","DAM","Grade")], cows[,c("Tattoo","Grade")], by.x="DAM",by.y="Tattoo")
+names(gradeDF)= c('DAM','Sire','HeifGrade', 'CowGrade')
+```
+
+
+
+
+
+
+
+```{r,include=FALSE}
+mmcomp <- subset(gradeDF, Sire== "TJ MARLBORO MAN 360A")
+mocomp <- subset(gradeDF, Sire=="GW MOVIN ON 183C")
+pbcomp <- subset(gradeDF, Sire=="GW PREMIUM BEEF 021TS")
+quantcomp <- subset(gradeDF, Sire=="GW QUANTUM LEAP 117B")
+boxplot(pbcomp$HeifGrade,pbcomp$CowGrade, main= "Premium Beef")
+boxplot(mmcomp$HeifGrade, mmcomp$CowGrade, main= "Marlboro Man")
+boxplot(mocomp$HeifGrade, mocomp$CowGrade, main='Movin On')
+boxplot(quantcomp$HeifGrade, quantcomp$CowGrade, main= "Quantum Leap")
+
+
+```
+
+
+```{r, include=FALSE}
+agedam <- substr(gradeDF$DAM,4,4)
+DAMage <- ifelse(agedam=="C",3,ifelse(agedam=="B",4,ifelse(agedam=="A",5,ifelse(agedam=="Z",6,ifelse(agedam=="Y",7,ifelse(agedam=="X",8,ifelse(agedam=="W",9,ifelse(agedam=="U",10,ifelse(agedam=="T",11,ifelse(agedam=="1",7,ifelse(agedam=="5",10,0)))))))))))
+gradeDF <- cbind(gradeDF,DAMage)
+```
+
+
+
+
+```{r, echo=FALSE}
+library('nnet')
+matplot(prop.table(table(gradeDF$DAMage,gradeDF$CowGrade),1),type = "b",xlab = "Age", ylab = "Proportion", lty = c(1,2,5), main= "Proportion of Overall Grades Based on Age")
+```
+
+This graph is an illustration of the overall grades as cows get older, each number corresponds to the characterized grade, with age being the x-axis and the y-axis being the proportion of the age group belonging to the corresponding grade.
+
+```{r,include=FALSE}
+
+feetDF <- merge(heifers[,c("Sire","DAM","Front.Feet","Rear.Feet")], cows[,c("Tattoo","Front.Feet", "Rear.Feet")], by.x="DAM",by.y="Tattoo")
+
+names(feetDF)= c('DAM','Sire','HeifFront','HeifRear', 'CowFront' ,'CowRear')
+
+agedam <- substr(feetDF$DAM,4,4)
+DAMage <- ifelse(agedam=="C",3,ifelse(agedam=="B",4,ifelse(agedam=="A",5,ifelse(agedam=="Z",6,ifelse(agedam=="Y",7,ifelse(agedam=="X",8,ifelse(agedam=="W",9,ifelse(agedam=="U",10,ifelse(agedam=="T",11,ifelse(agedam=="1",7,ifelse(agedam=="5",10,0)))))))))))
+
+feetDF <- cbind(feetDF,DAMage)
+cleanfeet <- na.omit(feetDF)
+matplot(prop.table(table(cleanfeet$DAMage,cleanfeet$CowFront),1),type = "b",xlab = "Age", ylab = "Proportion", lty = c(1,2,5))
+
+```
+
+```{r, echo=FALSE}
+matplot(prop.table(table(cleanfeet$DAMage,cleanfeet$CowFront),1),type = "b",xlab = "Age", ylab = "Proportion", lty = c(1,2,5), main= "Proportion of Front Feet Scores with Age")
+```
+
+This illustration is a little bit more interesting, as time goes on we see that proportionally the amount of 3 grade feet are relatively the same. If this same pattern is expressed through our analysis, we could find that a grade of 3 will be expected throughout the lifetime of an animal. Thus, if we observe a 3 grade at an age of two, proportionally we expect that proportionally the same amount of 3 grades are expected at an age of 10 years. This would significantly improve the knowledge regarding stayability, knowing that there will be significantly less animals taken out of production for being unable to travel.
+
+
+#### Model
+##### assumptions
+##### methods
+
+#### Results
+##### what we got (model results)
+##### how to interpret
+##### what inference
+
+#### Conclusion
 
 
 
