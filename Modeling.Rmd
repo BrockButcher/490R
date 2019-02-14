@@ -70,8 +70,6 @@ boxplot(pbcomp$HeifGrade,pbcomp$CowGrade, main= "Premium Beef")
 boxplot(mmcomp$HeifGrade, mmcomp$CowGrade, main= "Marlboro Man")
 boxplot(mocomp$HeifGrade, mocomp$CowGrade, main='Movin On')
 boxplot(quantcomp$HeifGrade, quantcomp$CowGrade, main= "Quantum Leap")
-
-
 ```
 
 
@@ -114,10 +112,43 @@ This illustration is a little bit more interesting, as time goes on we see that 
 
 
 #### Model
+
+For a nomianl dependent variable with k categories, the multinomial regression model estimates k-1 logit equations. Logit is commonly used as the link function in ordinal regression. This predicts probabilities of outcome <=i, $p_i$. $y_i=p_i+Error$ 
+
+$Log[p_i/(1-p_i)]=a_i_b_1x_1+b_2x_2+...$
+Where $p_i=$ probability of an outcome <=i
+$a_i=$ intercept for outcome <=i
+
 ##### assumptions
 ##### methods
 
 #### Results
+InitialRegmodel
+
+```{r}
+feetreg <- read.csv('feetreg')
+library(MASS)
+sirefact <- as.factor(SIRE)
+asfeet <- as.factor(Hfeet)
+
+cbind(sirefact,asfeet,feetreg)
+
+model <- polr(asfeet~Dfeet+MGDfeet+Dfeet*MGDfeet, Hess = TRUE, data = feetreg)
+summary(model)
+```
+
+
+
+```{r}
+ctable <- coef(summary(model))
+p <- pnorm(abs(ctable[,"t value"]), lower.tail = FALSE)*2
+(ctable <- cbind(ctable,"p value"=p))
+```
+
+
+
+
+
 ##### what we got (model results)
 ##### how to interpret
 ##### what inference

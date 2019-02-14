@@ -1,0 +1,171 @@
+---
+title: "Model Building"
+author: "Brockton Butcher"
+date: "2/7/2019"
+output: html_document
+---
+Known as ordianl logistic regression or proportional odds logistic regression
+```{r}
+require(foreign)
+require(nnet)
+require(ggplot2)
+require(reshape2)
+
+cows <- read.csv('cowswepd')
+with(cows,table())
+
+
+#make an ordered variable 
+cows$Grade <- as.ordered(cows$Grade)
+
+```
+
+```{r}
+library(MASS)
+model <- polr(FrontFeetHF~FrontFeetDAM+FrontFeetSIRE+FrontFeet...., Hess = TRUE)
+
+hefapi <- heifers %>% filter(API > 160)
+View(hefapi)
+```
+
+
+#datacleaning
+```{r}
+feetdf<- cows[complete.cases(cows[,11:12]),]
+View(feetdf)
+ffeetDF <- merge(heifers[,c("Sire","DAM","Front.Feet")], feetdf[,c("Tattoo","Front.Feet")], by.x="DAM",by.y="Tattoo")
+names(gradeDF)= c('DAM','Sire','HeifGrade', 'CowGrade')
+
+ffdatm <- merge(ffeetDF[,c("DAM","Front.Feet")])
+
+View(ffeetDF$DAM)
+```
+
+
+
+
+
+#interpretation
+
+For one unit increase in FM, we expect about a ____ increase in the expected value of our response on the log odds scale, given that all other variables in the model are held constant.
+#calculating p-values
+```{r}
+ctable <- coef(summary(model))
+ctable
+p <- pnorm(abs(ctable[, "t values"]), lower.tail = FALSE)*2
+(ctable <- cbind(ctable, "p-value"=p))
+```
+
+#preiction
+```{r}
+pred <- predict(model, data=cows, type='prob')
+```
+
+
+
+```{r}
+gradeDF <- merge(heifers[,c("Sire","DAM","Grade")], cows[,c("Tattoo","Grade")], by.x="DAM",by.y="Tattoo")
+names(gradeDF)= c('DAM','Sire','HeifGrade', 'CowGrade')
+```
+
+
+
+
+
+In the Proportional Odds Model, the event being modeled is not having an outcome in a single category as is done in the binary and multinomial models.  Rather, the event being modeled is having an outcome in a particular category or any previous category.
+
+In the proportional odds model, each outcome has its own intercept but the same regression coefficients.   This means:
+
+1. the overall odds of any event can differ, but
+
+2. the the effect of the predictors on the odds of an event occurring in every subsequent category is the same for every category.  This is an assumption of the model that you need to check.  It is often violated.
+
+The model is written somewhat differently in SPSS than usual with a minus sign between the intercept and all the regression coefficients.   This is a convention ensuring that for positive beat coefficients, increases in X values lead to an increase of probability in the higher-numbered response categories.  In SAS, the sign is a plus, so increases in predictor values lead to an increase of probability in the lower-numbered response categories.  Make sure you understand how the model is set up in your statistical package before interpreting results.
+
+
+
+Multinomial Logistic Regression (MLR) is a form of linear regression analysis conducted when the dependent variable is nominal with more than two levels. It is used to describe data and to explain the relationship between one dependent nominal variable and one or more continuous-level (interval or ratio scale) independent variables. You can understand nominal variable as, a variable which has no intrinsic ordering.
+
+For example: Types of Forests: ‘Evergreen Forest’, ‘Deciduous Forest’, ‘Rain Forest’. As you see, there is no intrinsic order in them, but each forest represent a unique category. In other words, multinomial regression is an extension of logistic regression, which analyzes dichotomous (binary) dependents.
+
+ The multinomial logistic regression estimates a separate binary logistic regression model for each dummy variables.  The result is M-1 binary logistic regression models.  Each model conveys the effect of predictors on the probability of success in that category, in comparison to the reference category.
+
+Each model has its own intercept and regression coefficients—the predictors can affect each category differently. Let’s compare this part with our classics – Linear and Logistic Regression.
+
+Standard linear regression requires the dependent variable to be of continuous-level (interval or ratio) scale. However, logistic regression jumps the gap by assuming that the dependent variable is a stochastic event.  And the dependent variable describes the outcome of this stochastic event with a density function (a function of cumulated probabilities ranging from 0 to 1). 
+
+Statisticians then argue one event happens if the probability is less than 0.5 and the opposite event happens when probability is greater than 0.5.
+
+Now we know that MLR extends the binary logistic model to a model with numerous categories(in dependent variable). However, it has one limitation. The category to which an outcome belongs to, does not assume any order in it. For example, if we have N categories, all have an equal probability. In reality, we come across problems where categories have a natural order.
+
+So, what to do when we have a natural order in categories of dependent variables ? In such situation, Ordinal Regression comes to our rescue
+
+
+
+
+We are wanting to predict the the outcome of the visual front feet characteristics of an animal by using the history of the offspring's parents to predict this. 
+Esstentially our model will take the form of predicting a 1,2,3,4, or 5 for the visual characteristics. We will observe data on the visual scores of the Sire, and other relatives
+
+
+
+Lets call an animal 109Y, we want to estimate what the score of her next calf will be, which we will call G. We know the score of 109Y, we also know the score the father of this calf, which will be known as S. We have 
+We have an animal W, she gets bred to S, we observe the offspring Y, we collect visual characteristics of all 3. We want to estimate what the new generation (O) will be when we breed Y to H knowing the corresponding characteristics of H like we do of Y. We know this for N differenct cows. We want to use the scores of each of these
+
+
+We want to use means of PGD,MPS,MGD,MGS,SIRE,DAM to predict what we will see in the offspring.
+
+O~MGS+MGD+PGS+PGD+DAM+SIRE
+
+
+```{r}
+require(foreign)
+require(ggplot2)
+require(MASS)
+require(Hmisc)
+require(reshape2)
+movinon <- heifers %>% filter(Sire=="GW MO")
+View(movinon)
+
+m <- polr(calf~MGS+MGD+PGS+PGD+DAM+SIRE, data = dat, Hess = TRUE)
+ctable <- coef(summary(m))
+```
+ORdinal regression explains the relationship between one dependent variable and two or more independent variables. ordinal regression analysis assumes a dependence or causal relationship between one or more independent and one dependent variable.  Moreover the effect of one or more covariates can be accounted for.  A typical question is, “What is the strength of relationship between dose (low, medium, high) and effect (mild, moderate, severe)?”
+
+Link function: The link function is a transformation of the cumulative probabilities of the dependent ordered variable that allows for estimation of the model.  However, in SPSS, five link functions are available, these link functions are as follows:
+Logit function: Logit function is the default function in SPSS for ordinal regression.  This function is usually used when the dependent ordinal variable has equal category.  Mathematically, logit function equals to f(x) = log(x / (1 – x)).
+Probit model: This is the inverse standard normal cumulative distribution function.  This function is more suitable when a dependent variable is normally distributed.
+Negative log-log f(x) = -log (- log(x)): This link function is recommended when the probability of the lower category is high.
+Complementary log-log f(x) = log (- log (1 – x)): This function is inverse of the negative log-log function, it is recommended when the probability of higher category is high.
+Cauchit. f(x) = tan (p(x – 0.5)): This link function is used when the extreme values are present in the data.
+
+#Logit
+ the defining characteristic of the logistic model is that increasing one of the independent variables multiplicatively scales the odds of the given outcome at a constant rate, with each dependent variable having its own parameter; for a binary independent variable this generalizes the odds ratio.
+The binary logistic regression model has extensions to more than two levels of the dependent variable: categorical outputs with more than two values are modelled by multinomial logistic regression, and if the multiple categories are ordered, by ordinal logistic regression, for example the proportional odds ordinal logistic model.[1] The model itself simply models probability of output in terms of input, and does not perform statistical classification (it is not a classifier), though it can be used to make a classifier, for instance by choosing a cutoff value and classifying inputs with probability greater than the cutoff as one class, below the cutoff as the other; this is a common way to make a binary classifier. The coefficients are generally not computed by a closed-form expression
+
+a logistic regression model tryung to use independent variables to predct , what is the likely response of each individual in the set.
+
+
+#assumptions
+One dependent variable, we cannot use multiple dependent variables.
+Parallel lines assumption: There is one regression equation for each category except the last category.  The last category probability can be predicted as 1-second last category probability.
+Adequate cell count: As per the rule of thumb, 80% of cells must have more than 5 counts.  No cell should have Zero count.  The greater the cell with less count, the less reliable the chi-square test will be.
+proportional odds assumption- which we meet
+ 
+
+
+#data structure 
+       Calf  Sire#  Cows#  MGD#  PGD#  MGS#  PGS#
+animal
+
+
+animals to consider? Movin On, Breakthru, Quantum, Breakout, Special Op.
+#Breakout
+Sparky would be a good model to validate on. 
+
+
+$y=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_3+\beta_4x_4$
+
+
+Need to test the same data set of characteristics, going from cows to heifers is hard because there isn't a metric within the heifer data set that brings down the overall grade such as udders. 
+
+It would be ideal to use the same sort of test but not in a prediction model but to compare means much like a t-test. There should be some things using non-parametric tests that would be ideal for this scenario. 
